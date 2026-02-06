@@ -4,3 +4,4 @@ bin/
 # IDE
 .vscode/
 .idea/
+tmp/

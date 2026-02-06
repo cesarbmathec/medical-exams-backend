@@ -19,7 +19,8 @@ CREATE TABLE roles (
     permissions JSONB DEFAULT '{}',
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
 COMMENT ON TABLE roles IS 'Roles del sistema con sus permisos';
@@ -43,7 +44,7 @@ CREATE TABLE users (
     locked_until TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE,
     deleted_by INTEGER REFERENCES users(id)
 );
 
@@ -78,7 +79,7 @@ CREATE TABLE patients (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by INTEGER REFERENCES users(id),
-    deleted_at TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE,
     deleted_by INTEGER REFERENCES users(id),
     UNIQUE(document_type, document_number)
 );
@@ -99,7 +100,8 @@ CREATE TABLE exam_categories (
     display_order INTEGER DEFAULT 0,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
 COMMENT ON TABLE exam_categories IS 'Categorías de exámenes de laboratorio';
@@ -118,7 +120,8 @@ CREATE TABLE sample_types (
     max_storage_time_hours INTEGER,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
 COMMENT ON TABLE sample_types IS 'Tipos de muestras biológicas';
@@ -144,7 +147,8 @@ CREATE TABLE exam_types (
     requires_appointment BOOLEAN DEFAULT false,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE,
 );
 
 COMMENT ON TABLE exam_types IS 'Catálogo de tipos de exámenes';
@@ -173,6 +177,7 @@ CREATE TABLE exam_parameters (
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE,
     UNIQUE(exam_type_id, parameter_code)
 );
 
@@ -235,7 +240,8 @@ CREATE TABLE orders (
     completed_at TIMESTAMP,
     cancelled_at TIMESTAMP,
     cancelled_by INTEGER REFERENCES users(id),
-    cancellation_reason TEXT
+    cancellation_reason TEXT,
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
 COMMENT ON TABLE orders IS 'Órdenes de exámenes solicitadas';
@@ -265,7 +271,8 @@ CREATE TABLE order_exams (
     notes TEXT,
     rejection_reason TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
 COMMENT ON TABLE order_exams IS 'Exámenes individuales dentro de cada orden';
@@ -295,6 +302,7 @@ CREATE TABLE exam_results (
     validated_by INTEGER REFERENCES users(id),
     validated_at TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE,
     UNIQUE(order_exam_id, exam_parameter_id, version)
 );
 
@@ -328,7 +336,8 @@ CREATE TABLE payments (
     approved_at TIMESTAMP,
     cancelled_by INTEGER REFERENCES users(id),
     cancelled_at TIMESTAMP,
-    cancellation_reason TEXT
+    cancellation_reason TEXT,
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
 COMMENT ON TABLE payments IS 'Registro de pagos realizados';
@@ -357,7 +366,8 @@ CREATE TABLE invoices (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     cancelled_by INTEGER REFERENCES users(id),
     cancelled_at TIMESTAMP,
-    cancellation_reason TEXT
+    cancellation_reason TEXT,
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
 COMMENT ON TABLE invoices IS 'Facturas emitidas';
@@ -402,7 +412,8 @@ CREATE TABLE reagents (
     storage_temperature VARCHAR(50),
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
 COMMENT ON TABLE reagents IS 'Inventario de reactivos e insumos';
@@ -430,7 +441,8 @@ CREATE TABLE equipment (
     responsible_user_id INTEGER REFERENCES users(id),
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
 COMMENT ON TABLE equipment IS 'Equipos y maquinaria del laboratorio';
@@ -453,7 +465,8 @@ CREATE TABLE equipment_maintenance (
     cost DECIMAL(10, 2),
     next_maintenance_date DATE,
     created_by INTEGER REFERENCES users(id),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
 COMMENT ON TABLE equipment_maintenance IS 'Historial de mantenimiento de equipos';
@@ -531,6 +544,25 @@ CREATE INDEX idx_reagents_active ON reagents(is_active) WHERE is_active = true;
 CREATE INDEX idx_equipment_code ON equipment(code);
 CREATE INDEX idx_equipment_status ON equipment(status);
 CREATE INDEX idx_equipment_next_maintenance ON equipment(next_maintenance_date);
+
+-- ============================================================================
+-- ÍNDICES PARA OPTIMIZAR SOFT DELETE (GORM siempre filtra por deleted_at IS NULL)
+-- ============================================================================
+CREATE INDEX idx_roles_deleted_at ON roles(deleted_at) WHERE deleted_at IS NULL;
+CREATE INDEX idx_users_deleted_at ON users(deleted_at) WHERE deleted_at IS NULL;
+CREATE INDEX idx_patients_deleted_at ON patients(deleted_at) WHERE deleted_at IS NULL;
+CREATE INDEX idx_orders_deleted_at ON orders(deleted_at) WHERE deleted_at IS NULL;
+CREATE INDEX idx_order_exams_deleted_at ON order_exams(deleted_at) WHERE deleted_at IS NULL;
+CREATE INDEX idx_exam_results_deleted_at ON exam_results(deleted_at) WHERE deleted_at IS NULL;
+CREATE INDEX idx_exam_types_deleted_at ON exam_types(deleted_at) WHERE deleted_at IS NULL;
+CREATE INDEX idx_exam_parameters_deleted_at ON exam_parameters(deleted_at) WHERE deleted_at IS NULL;
+CREATE INDEX idx_payments_deleted_at ON payments(deleted_at) WHERE deleted_at IS NULL;
+CREATE INDEX idx_invoices_deleted_at ON invoices(deleted_at) WHERE deleted_at IS NULL;
+CREATE INDEX idx_audit_logs_deleted_at ON audit_logs(deleted_at) WHERE deleted_at IS NULL;
+CREATE INDEX idx_reagents_deleted_at ON reagents(deleted_at) WHERE deleted_at IS NULL;
+CREATE INDEX idx_equipment_deleted_at ON equipment(deleted_at) WHERE deleted_at IS NULL;
+
+COMMENT ON TABLE audit_logs IS 'Registro histórico de cambios en el sistema';
 
 -- ============================================================================
 -- TRIGGERS PARA UPDATED_AT AUTOMÁTICO
