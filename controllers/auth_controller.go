@@ -4,26 +4,26 @@ import (
 	"net/http"
 
 	"github.com/cesarbmathec/medical-exams-backend/config"
+	"github.com/cesarbmathec/medical-exams-backend/dtos"
 	"github.com/cesarbmathec/medical-exams-backend/models"
 	"github.com/cesarbmathec/medical-exams-backend/utils"
 	"github.com/gin-gonic/gin"
+
+	_ "github.com/cesarbmathec/medical-exams-backend/docs"
 )
 
-type LoginRequest struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
-}
-
-type RegisterRequest struct {
-	Username string `json:"username" binding:"required,min=3"`
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=6"`
-	FullName string `json:"full_name" binding:"required"`
-	RoleID   uint   `json:"role_id" binding:"required"`
-}
-
+// Login godoc
+// @Summary      Iniciar sesión
+// @Description  Autentica al usuario y devuelve un token JWT
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request body dtos.LoginRequest true "Credenciales de usuario"
+// @Success      200 {object} map[string]interface{}
+// @Failure      401 {object} map[string]string
+// @Router       /login [post]
 func Login(c *gin.Context) {
-	var input LoginRequest
+	var input dtos.LoginRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Datos inválidos"})
 		return
@@ -58,8 +58,19 @@ func Login(c *gin.Context) {
 	})
 }
 
+// Register godoc
+// @Summary      Registrar nuevo usuario
+// @Description  Crea un nuevo usuario en el sistema
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request body dtos.RegisterRequest true "Datos del nuevo usuario"
+// @Success      201 {object} map[string]interface{}
+// @Failure      400 {object} map[string]string
+// @Failure      500 {object} map[string]string
+// @Router       /register [post]
 func Register(c *gin.Context) {
-	var input RegisterRequest
+	var input dtos.RegisterRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

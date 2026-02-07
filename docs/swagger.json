@@ -1,0 +1,1452 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API para gestión de exámenes, pacientes y resultados.",
+        "title": "Laboratorio Clínico API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "Soporte Técnico",
+            "email": "soporte@laboratorio.com"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/api",
+    "paths": {
+        "/exams/catalog": {
+            "get": {
+                "description": "Obtiene la lista de tipos de exámenes disponibles con sus categorías y parámetros",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "exams"
+                ],
+                "summary": "Catálogo de exámenes",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.ExamType"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/login": {
+            "post": {
+                "description": "Autentica al usuario y devuelve un token JWT",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Iniciar sesión",
+                "parameters": [
+                    {
+                        "description": "Credenciales de usuario",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dtos.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/orders": {
+            "get": {
+                "description": "Obtiene una lista de todas las órdenes de examen con sus detalles",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "orders"
+                ],
+                "summary": "Listar órdenes de examen",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Order"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Crea una nueva orden de examen para un paciente específico",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "orders"
+                ],
+                "summary": "Crear orden de examen",
+                "parameters": [
+                    {
+                        "description": "Datos para crear la orden",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dtos.CreateOrderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Order"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/patients": {
+            "get": {
+                "description": "Obtiene una lista de pacientes, con opción de filtrar por número de documento",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "patients"
+                ],
+                "summary": "Listar pacientes",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Número de documento para filtrar",
+                        "name": "document",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Patient"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Crea un nuevo paciente en el sistema",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "patients"
+                ],
+                "summary": "Crear paciente",
+                "parameters": [
+                    {
+                        "description": "Datos para crear el paciente",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dtos.CreatePatientRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Patient"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/patients/{id}": {
+            "get": {
+                "description": "Obtiene los detalles de un paciente específico por su ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "patients"
+                ],
+                "summary": "Obtener paciente por ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID del paciente",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Patient"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/register": {
+            "post": {
+                "description": "Crea un nuevo usuario en el sistema",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Registrar nuevo usuario",
+                "parameters": [
+                    {
+                        "description": "Datos del nuevo usuario",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dtos.RegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/results/{id}": {
+            "post": {
+                "description": "Permite a un técnico de laboratorio registrar los resultados de un examen específico dentro de una orden",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "results"
+                ],
+                "summary": "Registrar resultados de examen",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID del OrderExam",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Resultados a registrar",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dtos.UpdateResultRequest"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "dtos.CreateOrderRequest": {
+            "type": "object",
+            "required": [
+                "exams",
+                "patient_id",
+                "priority"
+            ],
+            "properties": {
+                "diagnosis": {
+                    "type": "string"
+                },
+                "exams": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dtos.OrderExamRequest"
+                    }
+                },
+                "patient_id": {
+                    "type": "integer"
+                },
+                "priority": {
+                    "type": "string",
+                    "enum": [
+                        "normal",
+                        "urgente",
+                        "stat"
+                    ]
+                },
+                "referring_doctor": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.CreatePatientRequest": {
+            "type": "object",
+            "required": [
+                "date_of_birth",
+                "document_number",
+                "document_type",
+                "first_name",
+                "last_name"
+            ],
+            "properties": {
+                "blood_type": {
+                    "type": "string",
+                    "enum": [
+                        "A+",
+                        "A-",
+                        "B+",
+                        "B-",
+                        "AB+",
+                        "AB-",
+                        "O+",
+                        "O-"
+                    ]
+                },
+                "date_of_birth": {
+                    "type": "string"
+                },
+                "document_number": {
+                    "type": "string"
+                },
+                "document_type": {
+                    "type": "string",
+                    "enum": [
+                        "cedula",
+                        "pasaporte",
+                        "rif",
+                        "otro"
+                    ]
+                },
+                "email": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "string",
+                    "enum": [
+                        "M",
+                        "F",
+                        "O"
+                    ]
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.LoginRequest": {
+            "type": "object",
+            "required": [
+                "password",
+                "username"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.OrderExamRequest": {
+            "type": "object",
+            "required": [
+                "exam_type_id",
+                "price"
+            ],
+            "properties": {
+                "exam_type_id": {
+                    "type": "integer"
+                },
+                "price": {
+                    "type": "number"
+                }
+            }
+        },
+        "dtos.RegisterRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "full_name",
+                "password",
+                "role_id",
+                "username"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 6
+                },
+                "role_id": {
+                    "type": "integer"
+                },
+                "username": {
+                    "type": "string",
+                    "minLength": 3
+                }
+            }
+        },
+        "dtos.UpdateResultRequest": {
+            "type": "object",
+            "required": [
+                "exam_parameter_id"
+            ],
+            "properties": {
+                "exam_parameter_id": {
+                    "type": "integer"
+                },
+                "value_numeric": {
+                    "type": "number"
+                },
+                "value_text": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ExamCategory": {
+            "type": "object",
+            "required": [
+                "code",
+                "name"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "display_order": {
+                    "type": "integer"
+                },
+                "exam_types": {
+                    "description": "Relaciones",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ExamType"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ExamParameter": {
+            "type": "object",
+            "required": [
+                "data_type",
+                "parameter_name"
+            ],
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "data_type": {
+                    "type": "string",
+                    "enum": [
+                        "numeric",
+                        "text",
+                        "boolean",
+                        "select"
+                    ]
+                },
+                "display_order": {
+                    "type": "integer"
+                },
+                "exam_type": {
+                    "description": "Relaciones",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.ExamType"
+                        }
+                    ]
+                },
+                "exam_type_id": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_critical": {
+                    "type": "boolean"
+                },
+                "is_required": {
+                    "type": "boolean"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "parameter_code": {
+                    "type": "string"
+                },
+                "parameter_name": {
+                    "type": "string"
+                },
+                "reference_max": {
+                    "type": "number"
+                },
+                "reference_min": {
+                    "type": "number"
+                },
+                "reference_value_text": {
+                    "type": "string"
+                },
+                "select_options": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "unit_of_measure": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "validation_rules": {
+                    "description": "Reutilizamos el tipo",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.Permissions"
+                        }
+                    ]
+                }
+            }
+        },
+        "models.ExamResult": {
+            "type": "object",
+            "required": [
+                "entered_by",
+                "exam_parameter_id",
+                "order_exam_id"
+            ],
+            "properties": {
+                "abnormality_type": {
+                    "description": "'low', 'high', 'abnormal'",
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "entered_at": {
+                    "type": "string"
+                },
+                "entered_by": {
+                    "type": "integer"
+                },
+                "entered_by_user": {
+                    "$ref": "#/definitions/models.User"
+                },
+                "exam_parameter": {
+                    "$ref": "#/definitions/models.ExamParameter"
+                },
+                "exam_parameter_id": {
+                    "type": "integer"
+                },
+                "flags": {
+                    "description": "'L' (low), 'H' (high), 'C' (critical)",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_abnormal": {
+                    "type": "boolean"
+                },
+                "is_critical": {
+                    "type": "boolean"
+                },
+                "is_current": {
+                    "type": "boolean"
+                },
+                "order_exam": {
+                    "description": "Relaciones",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.OrderExam"
+                        }
+                    ]
+                },
+                "order_exam_id": {
+                    "type": "integer"
+                },
+                "technician_notes": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "validated_at": {
+                    "type": "string"
+                },
+                "validated_by": {
+                    "type": "integer"
+                },
+                "validated_by_user": {
+                    "$ref": "#/definitions/models.User"
+                },
+                "value_boolean": {
+                    "type": "boolean"
+                },
+                "value_numeric": {
+                    "type": "number"
+                },
+                "value_text": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.ExamType": {
+            "type": "object",
+            "required": [
+                "base_price",
+                "category_id",
+                "code",
+                "name",
+                "sample_type_id"
+            ],
+            "properties": {
+                "base_price": {
+                    "type": "number"
+                },
+                "category": {
+                    "description": "Relaciones",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.ExamCategory"
+                        }
+                    ]
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "fasting_hours": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parameters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ExamParameter"
+                    }
+                },
+                "preparation_instructions": {
+                    "type": "string"
+                },
+                "processing_time_hours": {
+                    "type": "integer"
+                },
+                "requires_appointment": {
+                    "type": "boolean"
+                },
+                "requires_fasting": {
+                    "type": "boolean"
+                },
+                "sample_type": {
+                    "$ref": "#/definitions/models.SampleType"
+                },
+                "sample_type_id": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Order": {
+            "type": "object",
+            "required": [
+                "patient_id"
+            ],
+            "properties": {
+                "balance": {
+                    "type": "number"
+                },
+                "cancellation_reason": {
+                    "type": "string"
+                },
+                "cancelled_at": {
+                    "type": "string"
+                },
+                "cancelled_by": {
+                    "type": "integer"
+                },
+                "clinical_notes": {
+                    "type": "string"
+                },
+                "completed_at": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "integer"
+                },
+                "creator": {
+                    "$ref": "#/definitions/models.User"
+                },
+                "diagnosis": {
+                    "type": "string"
+                },
+                "discount_amount": {
+                    "type": "number"
+                },
+                "discount_percentage": {
+                    "type": "number"
+                },
+                "doctor_phone": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "order_date": {
+                    "type": "string"
+                },
+                "order_exams": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.OrderExam"
+                    }
+                },
+                "order_number": {
+                    "type": "string"
+                },
+                "paid_amount": {
+                    "type": "number"
+                },
+                "patient": {
+                    "description": "Relaciones",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.Patient"
+                        }
+                    ]
+                },
+                "patient_id": {
+                    "type": "integer"
+                },
+                "payment_status": {
+                    "type": "string"
+                },
+                "payments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Payment"
+                    }
+                },
+                "priority": {
+                    "type": "string",
+                    "enum": [
+                        "normal",
+                        "urgente",
+                        "stat"
+                    ]
+                },
+                "referring_doctor": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "subtotal": {
+                    "type": "number"
+                },
+                "tax_amount": {
+                    "type": "number"
+                },
+                "tax_percentage": {
+                    "type": "number"
+                },
+                "total_amount": {
+                    "type": "number"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.OrderExam": {
+            "type": "object",
+            "required": [
+                "exam_type_id",
+                "order_id",
+                "price"
+            ],
+            "properties": {
+                "analyzed_at": {
+                    "type": "string"
+                },
+                "analyzed_by": {
+                    "type": "integer"
+                },
+                "analyzed_by_user": {
+                    "$ref": "#/definitions/models.User"
+                },
+                "collected_by_user": {
+                    "$ref": "#/definitions/models.User"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "discount": {
+                    "type": "number"
+                },
+                "exam_type": {
+                    "$ref": "#/definitions/models.ExamType"
+                },
+                "exam_type_id": {
+                    "type": "integer"
+                },
+                "final_price": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "order": {
+                    "description": "Relaciones",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.Order"
+                        }
+                    ]
+                },
+                "order_id": {
+                    "type": "integer"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "rejection_reason": {
+                    "type": "string"
+                },
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ExamResult"
+                    }
+                },
+                "sample_barcode": {
+                    "type": "string"
+                },
+                "sample_collected_at": {
+                    "type": "string"
+                },
+                "sample_collected_by": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "validated_at": {
+                    "type": "string"
+                },
+                "validated_by": {
+                    "type": "integer"
+                },
+                "validated_by_user": {
+                    "$ref": "#/definitions/models.User"
+                }
+            }
+        },
+        "models.Patient": {
+            "type": "object",
+            "required": [
+                "date_of_birth",
+                "document_number",
+                "document_type",
+                "first_name",
+                "last_name"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "allergies": {
+                    "type": "string"
+                },
+                "blood_type": {
+                    "type": "string",
+                    "enum": [
+                        "A+",
+                        "A-",
+                        "B+",
+                        "B-",
+                        "AB+",
+                        "AB-",
+                        "O+",
+                        "O-"
+                    ]
+                },
+                "city": {
+                    "type": "string"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "integer"
+                },
+                "creator": {
+                    "description": "Relaciones",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    ]
+                },
+                "date_of_birth": {
+                    "type": "string"
+                },
+                "document_number": {
+                    "type": "string"
+                },
+                "document_type": {
+                    "type": "string",
+                    "enum": [
+                        "cedula",
+                        "pasaporte",
+                        "rif",
+                        "otro"
+                    ]
+                },
+                "email": {
+                    "type": "string"
+                },
+                "emergency_contact_name": {
+                    "type": "string"
+                },
+                "emergency_contact_phone": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "string",
+                    "enum": [
+                        "M",
+                        "F",
+                        "O"
+                    ]
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "medical_conditions": {
+                    "type": "string"
+                },
+                "orders": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Order"
+                    }
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Payment": {
+            "type": "object",
+            "required": [
+                "amount",
+                "order_id",
+                "payment_method"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "approved_at": {
+                    "type": "string"
+                },
+                "approved_by": {
+                    "type": "integer"
+                },
+                "approved_by_user": {
+                    "$ref": "#/definitions/models.User"
+                },
+                "bank_name": {
+                    "type": "string"
+                },
+                "cancellation_reason": {
+                    "type": "string"
+                },
+                "cancelled_at": {
+                    "type": "string"
+                },
+                "cancelled_by": {
+                    "type": "integer"
+                },
+                "cancelled_by_user": {
+                    "$ref": "#/definitions/models.User"
+                },
+                "card_last_digits": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "integer"
+                },
+                "creator": {
+                    "$ref": "#/definitions/models.User"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "order": {
+                    "description": "Relaciones",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.Order"
+                        }
+                    ]
+                },
+                "order_id": {
+                    "type": "integer"
+                },
+                "payment_date": {
+                    "type": "string"
+                },
+                "payment_method": {
+                    "type": "string",
+                    "enum": [
+                        "efectivo",
+                        "tarjeta_debito",
+                        "tarjeta_credito",
+                        "transferencia",
+                        "pago_movil",
+                        "cheque",
+                        "otro"
+                    ]
+                },
+                "payment_number": {
+                    "type": "string"
+                },
+                "reference_number": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Permissions": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Role": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "permissions": {
+                    "$ref": "#/definitions/models.Permissions"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.SampleType": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "collection_instructions": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "exam_types": {
+                    "description": "Relaciones",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ExamType"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "max_storage_time_hours": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "storage_requirements": {
+                    "type": "string"
+                },
+                "storage_temperature": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.User": {
+            "type": "object",
+            "required": [
+                "email",
+                "full_name",
+                "password",
+                "role_id",
+                "username"
+            ],
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "last_login": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 6
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "role": {
+                    "description": "Relaciones",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.Role"
+                        }
+                    ]
+                },
+                "role_id": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 3
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Escribe 'Bearer ' seguido de tu token JWT",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

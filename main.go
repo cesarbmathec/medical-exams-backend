@@ -1,3 +1,19 @@
+// @title           Laboratorio Clínico API
+// @version         1.0
+// @description     API para gestión de exámenes, pacientes y resultados.
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   Soporte Técnico
+// @contact.email  soporte@laboratorio.com
+
+// @host      localhost:8080
+// @BasePath  /api
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Escribe 'Bearer ' seguido de tu token JWT
+
 package main
 
 import (
@@ -11,6 +27,13 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+
+	// Swagger
+
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+
+	_ "github.com/cesarbmathec/medical-exams-backend/docs"
 )
 
 func main() {
@@ -63,12 +86,24 @@ func main() {
 			patients.GET("/", controllers.GetPatients)       // Listar/Buscar
 			patients.GET("/:id", controllers.GetPatientByID) // Ver detalle
 		}
+
+		// Catálogo
+		protected.GET("/exams/catalog", controllers.GetExamCatalog)
+
+		// Órdenes
+		protected.POST("/orders", controllers.CreateOrder)
+		protected.GET("/orders", controllers.GetOrders)
+
+		// Resultados (Ruta para Bioanalistas)
+		protected.POST("/exams/:id/results", controllers.SubmitResults)
 	}
 
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
+
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	log.Println("🚀 Servidor corriendo en http://localhost:" + port)
 	r.Run(":" + port)

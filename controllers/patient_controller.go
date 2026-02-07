@@ -7,8 +7,21 @@ import (
 	"github.com/cesarbmathec/medical-exams-backend/dtos"
 	"github.com/cesarbmathec/medical-exams-backend/models"
 	"github.com/gin-gonic/gin"
+
+	_ "github.com/cesarbmathec/medical-exams-backend/docs"
 )
 
+// CreatePatient godoc
+// @Summary      Crear paciente
+// @Description  Crea un nuevo paciente en el sistema
+// @Tags         patients
+// @Accept       json
+// @Produce      json
+// @Param        request body dtos.CreatePatientRequest true "Datos para crear el paciente"
+// @Success      201 {object} models.Patient
+// @Failure      400 {object} map[string]string
+// @Failure      500 {object} map[string]string
+// @Router       /patients [post]
 func CreatePatient(c *gin.Context) {
 	var input dtos.CreatePatientRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -42,7 +55,16 @@ func CreatePatient(c *gin.Context) {
 	c.JSON(http.StatusCreated, patient)
 }
 
-// GetPatients lista pacientes con filtros opcionales
+// GetPatients godoc
+// @Summary      Listar pacientes
+// @Description  Obtiene una lista de pacientes, con opción de filtrar por número de documento
+// @Tags         patients
+// @Accept       json
+// @Produce      json
+// @Param        document query string false "Número de documento para filtrar"
+// @Success      200 {array} models.Patient
+// @Failure      500 {object} map[string]string
+// @Router       /patients [get]
 func GetPatients(c *gin.Context) {
 	var patients []models.Patient
 	db := config.GetDB()
@@ -62,7 +84,17 @@ func GetPatients(c *gin.Context) {
 	c.JSON(http.StatusOK, patients)
 }
 
-// GetPatientByID busca un paciente específico
+// GetPatientByID godoc
+// @Summary      Obtener paciente por ID
+// @Description  Obtiene los detalles de un paciente específico por su ID
+// @Tags         patients
+// @Accept       json
+// @Produce      json
+// @Param        id path int true "ID del paciente"
+// @Success      200 {object} models.Patient
+// @Failure      404 {object} map[string]string
+// @Failure      500 {object} map[string]string
+// @Router       /patients/{id} [get]
 func GetPatientByID(c *gin.Context) {
 	id := c.Param("id")
 	var patient models.Patient

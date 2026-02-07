@@ -1,0 +1,977 @@
+basePath: /api
+definitions:
+  dtos.CreateOrderRequest:
+    properties:
+      diagnosis:
+        type: string
+      exams:
+        items:
+          $ref: '#/definitions/dtos.OrderExamRequest'
+        type: array
+      patient_id:
+        type: integer
+      priority:
+        enum:
+        - normal
+        - urgente
+        - stat
+        type: string
+      referring_doctor:
+        type: string
+    required:
+    - exams
+    - patient_id
+    - priority
+    type: object
+  dtos.CreatePatientRequest:
+    properties:
+      blood_type:
+        enum:
+        - A+
+        - A-
+        - B+
+        - B-
+        - AB+
+        - AB-
+        - O+
+        - O-
+        type: string
+      date_of_birth:
+        type: string
+      document_number:
+        type: string
+      document_type:
+        enum:
+        - cedula
+        - pasaporte
+        - rif
+        - otro
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      gender:
+        enum:
+        - M
+        - F
+        - O
+        type: string
+      last_name:
+        type: string
+      phone:
+        type: string
+    required:
+    - date_of_birth
+    - document_number
+    - document_type
+    - first_name
+    - last_name
+    type: object
+  dtos.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  dtos.OrderExamRequest:
+    properties:
+      exam_type_id:
+        type: integer
+      price:
+        type: number
+    required:
+    - exam_type_id
+    - price
+    type: object
+  dtos.RegisterRequest:
+    properties:
+      email:
+        type: string
+      full_name:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      role_id:
+        type: integer
+      username:
+        minLength: 3
+        type: string
+    required:
+    - email
+    - full_name
+    - password
+    - role_id
+    - username
+    type: object
+  dtos.UpdateResultRequest:
+    properties:
+      exam_parameter_id:
+        type: integer
+      value_numeric:
+        type: number
+      value_text:
+        type: string
+    required:
+    - exam_parameter_id
+    type: object
+  models.ExamCategory:
+    properties:
+      code:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      display_order:
+        type: integer
+      exam_types:
+        description: Relaciones
+        items:
+          $ref: '#/definitions/models.ExamType'
+        type: array
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      name:
+        type: string
+      updated_at:
+        type: string
+    required:
+    - code
+    - name
+    type: object
+  models.ExamParameter:
+    properties:
+      created_at:
+        type: string
+      data_type:
+        enum:
+        - numeric
+        - text
+        - boolean
+        - select
+        type: string
+      display_order:
+        type: integer
+      exam_type:
+        allOf:
+        - $ref: '#/definitions/models.ExamType'
+        description: Relaciones
+      exam_type_id:
+        type: integer
+      id:
+        type: integer
+      is_critical:
+        type: boolean
+      is_required:
+        type: boolean
+      notes:
+        type: string
+      parameter_code:
+        type: string
+      parameter_name:
+        type: string
+      reference_max:
+        type: number
+      reference_min:
+        type: number
+      reference_value_text:
+        type: string
+      select_options:
+        items:
+          type: string
+        type: array
+      unit_of_measure:
+        type: string
+      updated_at:
+        type: string
+      validation_rules:
+        allOf:
+        - $ref: '#/definitions/models.Permissions'
+        description: Reutilizamos el tipo
+    required:
+    - data_type
+    - parameter_name
+    type: object
+  models.ExamResult:
+    properties:
+      abnormality_type:
+        description: '''low'', ''high'', ''abnormal'''
+        type: string
+      created_at:
+        type: string
+      entered_at:
+        type: string
+      entered_by:
+        type: integer
+      entered_by_user:
+        $ref: '#/definitions/models.User'
+      exam_parameter:
+        $ref: '#/definitions/models.ExamParameter'
+      exam_parameter_id:
+        type: integer
+      flags:
+        description: '''L'' (low), ''H'' (high), ''C'' (critical)'
+        type: string
+      id:
+        type: integer
+      is_abnormal:
+        type: boolean
+      is_critical:
+        type: boolean
+      is_current:
+        type: boolean
+      order_exam:
+        allOf:
+        - $ref: '#/definitions/models.OrderExam'
+        description: Relaciones
+      order_exam_id:
+        type: integer
+      technician_notes:
+        type: string
+      updated_at:
+        type: string
+      validated_at:
+        type: string
+      validated_by:
+        type: integer
+      validated_by_user:
+        $ref: '#/definitions/models.User'
+      value_boolean:
+        type: boolean
+      value_numeric:
+        type: number
+      value_text:
+        type: string
+      version:
+        type: integer
+    required:
+    - entered_by
+    - exam_parameter_id
+    - order_exam_id
+    type: object
+  models.ExamType:
+    properties:
+      base_price:
+        type: number
+      category:
+        allOf:
+        - $ref: '#/definitions/models.ExamCategory'
+        description: Relaciones
+      category_id:
+        type: integer
+      code:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      fasting_hours:
+        type: integer
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      name:
+        type: string
+      parameters:
+        items:
+          $ref: '#/definitions/models.ExamParameter'
+        type: array
+      preparation_instructions:
+        type: string
+      processing_time_hours:
+        type: integer
+      requires_appointment:
+        type: boolean
+      requires_fasting:
+        type: boolean
+      sample_type:
+        $ref: '#/definitions/models.SampleType'
+      sample_type_id:
+        type: integer
+      updated_at:
+        type: string
+    required:
+    - base_price
+    - category_id
+    - code
+    - name
+    - sample_type_id
+    type: object
+  models.Order:
+    properties:
+      balance:
+        type: number
+      cancellation_reason:
+        type: string
+      cancelled_at:
+        type: string
+      cancelled_by:
+        type: integer
+      clinical_notes:
+        type: string
+      completed_at:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      creator:
+        $ref: '#/definitions/models.User'
+      diagnosis:
+        type: string
+      discount_amount:
+        type: number
+      discount_percentage:
+        type: number
+      doctor_phone:
+        type: string
+      id:
+        type: integer
+      order_date:
+        type: string
+      order_exams:
+        items:
+          $ref: '#/definitions/models.OrderExam'
+        type: array
+      order_number:
+        type: string
+      paid_amount:
+        type: number
+      patient:
+        allOf:
+        - $ref: '#/definitions/models.Patient'
+        description: Relaciones
+      patient_id:
+        type: integer
+      payment_status:
+        type: string
+      payments:
+        items:
+          $ref: '#/definitions/models.Payment'
+        type: array
+      priority:
+        enum:
+        - normal
+        - urgente
+        - stat
+        type: string
+      referring_doctor:
+        type: string
+      status:
+        type: string
+      subtotal:
+        type: number
+      tax_amount:
+        type: number
+      tax_percentage:
+        type: number
+      total_amount:
+        type: number
+      updated_at:
+        type: string
+    required:
+    - patient_id
+    type: object
+  models.OrderExam:
+    properties:
+      analyzed_at:
+        type: string
+      analyzed_by:
+        type: integer
+      analyzed_by_user:
+        $ref: '#/definitions/models.User'
+      collected_by_user:
+        $ref: '#/definitions/models.User'
+      created_at:
+        type: string
+      discount:
+        type: number
+      exam_type:
+        $ref: '#/definitions/models.ExamType'
+      exam_type_id:
+        type: integer
+      final_price:
+        type: number
+      id:
+        type: integer
+      notes:
+        type: string
+      order:
+        allOf:
+        - $ref: '#/definitions/models.Order'
+        description: Relaciones
+      order_id:
+        type: integer
+      price:
+        type: number
+      rejection_reason:
+        type: string
+      results:
+        items:
+          $ref: '#/definitions/models.ExamResult'
+        type: array
+      sample_barcode:
+        type: string
+      sample_collected_at:
+        type: string
+      sample_collected_by:
+        type: integer
+      status:
+        type: string
+      updated_at:
+        type: string
+      validated_at:
+        type: string
+      validated_by:
+        type: integer
+      validated_by_user:
+        $ref: '#/definitions/models.User'
+    required:
+    - exam_type_id
+    - order_id
+    - price
+    type: object
+  models.Patient:
+    properties:
+      address:
+        type: string
+      allergies:
+        type: string
+      blood_type:
+        enum:
+        - A+
+        - A-
+        - B+
+        - B-
+        - AB+
+        - AB-
+        - O+
+        - O-
+        type: string
+      city:
+        type: string
+      country:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      creator:
+        allOf:
+        - $ref: '#/definitions/models.User'
+        description: Relaciones
+      date_of_birth:
+        type: string
+      document_number:
+        type: string
+      document_type:
+        enum:
+        - cedula
+        - pasaporte
+        - rif
+        - otro
+        type: string
+      email:
+        type: string
+      emergency_contact_name:
+        type: string
+      emergency_contact_phone:
+        type: string
+      first_name:
+        type: string
+      gender:
+        enum:
+        - M
+        - F
+        - O
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      last_name:
+        type: string
+      medical_conditions:
+        type: string
+      orders:
+        items:
+          $ref: '#/definitions/models.Order'
+        type: array
+      phone:
+        type: string
+      state:
+        type: string
+      updated_at:
+        type: string
+    required:
+    - date_of_birth
+    - document_number
+    - document_type
+    - first_name
+    - last_name
+    type: object
+  models.Payment:
+    properties:
+      amount:
+        type: number
+      approved_at:
+        type: string
+      approved_by:
+        type: integer
+      approved_by_user:
+        $ref: '#/definitions/models.User'
+      bank_name:
+        type: string
+      cancellation_reason:
+        type: string
+      cancelled_at:
+        type: string
+      cancelled_by:
+        type: integer
+      cancelled_by_user:
+        $ref: '#/definitions/models.User'
+      card_last_digits:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      creator:
+        $ref: '#/definitions/models.User'
+      id:
+        type: integer
+      notes:
+        type: string
+      order:
+        allOf:
+        - $ref: '#/definitions/models.Order'
+        description: Relaciones
+      order_id:
+        type: integer
+      payment_date:
+        type: string
+      payment_method:
+        enum:
+        - efectivo
+        - tarjeta_debito
+        - tarjeta_credito
+        - transferencia
+        - pago_movil
+        - cheque
+        - otro
+        type: string
+      payment_number:
+        type: string
+      reference_number:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+    required:
+    - amount
+    - order_id
+    - payment_method
+    type: object
+  models.Permissions:
+    additionalProperties:
+      items:
+        type: string
+      type: array
+    type: object
+  models.Role:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      name:
+        type: string
+      permissions:
+        $ref: '#/definitions/models.Permissions'
+      updated_at:
+        type: string
+    required:
+    - name
+    type: object
+  models.SampleType:
+    properties:
+      collection_instructions:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      exam_types:
+        description: Relaciones
+        items:
+          $ref: '#/definitions/models.ExamType'
+        type: array
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      max_storage_time_hours:
+        type: integer
+      name:
+        type: string
+      storage_requirements:
+        type: string
+      storage_temperature:
+        type: string
+      updated_at:
+        type: string
+    required:
+    - name
+    type: object
+  models.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      last_login:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      phone:
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/models.Role'
+        description: Relaciones
+      role_id:
+        type: integer
+      updated_at:
+        type: string
+      username:
+        maxLength: 50
+        minLength: 3
+        type: string
+    required:
+    - email
+    - full_name
+    - password
+    - role_id
+    - username
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: soporte@laboratorio.com
+    name: Soporte Técnico
+  description: API para gestión de exámenes, pacientes y resultados.
+  termsOfService: http://swagger.io/terms/
+  title: Laboratorio Clínico API
+  version: "1.0"
+paths:
+  /exams/catalog:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene la lista de tipos de exámenes disponibles con sus categorías
+        y parámetros
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.ExamType'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Catálogo de exámenes
+      tags:
+      - exams
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Autentica al usuario y devuelve un token JWT
+      parameters:
+      - description: Credenciales de usuario
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Iniciar sesión
+      tags:
+      - auth
+  /orders:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene una lista de todas las órdenes de examen con sus detalles
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Order'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Listar órdenes de examen
+      tags:
+      - orders
+    post:
+      consumes:
+      - application/json
+      description: Crea una nueva orden de examen para un paciente específico
+      parameters:
+      - description: Datos para crear la orden
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.CreateOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Order'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Crear orden de examen
+      tags:
+      - orders
+  /patients:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene una lista de pacientes, con opción de filtrar por número
+        de documento
+      parameters:
+      - description: Número de documento para filtrar
+        in: query
+        name: document
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Patient'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Listar pacientes
+      tags:
+      - patients
+    post:
+      consumes:
+      - application/json
+      description: Crea un nuevo paciente en el sistema
+      parameters:
+      - description: Datos para crear el paciente
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.CreatePatientRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Patient'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Crear paciente
+      tags:
+      - patients
+  /patients/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene los detalles de un paciente específico por su ID
+      parameters:
+      - description: ID del paciente
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Patient'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Obtener paciente por ID
+      tags:
+      - patients
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Crea un nuevo usuario en el sistema
+      parameters:
+      - description: Datos del nuevo usuario
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Registrar nuevo usuario
+      tags:
+      - auth
+  /results/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Permite a un técnico de laboratorio registrar los resultados de
+        un examen específico dentro de una orden
+      parameters:
+      - description: ID del OrderExam
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Resultados a registrar
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/dtos.UpdateResultRequest'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Registrar resultados de examen
+      tags:
+      - results
+securityDefinitions:
+  BearerAuth:
+    description: Escribe 'Bearer ' seguido de tu token JWT
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
