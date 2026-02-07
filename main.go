@@ -21,9 +21,8 @@ import (
 	"os"
 
 	"github.com/cesarbmathec/medical-exams-backend/config"
-	"github.com/cesarbmathec/medical-exams-backend/controllers"
-	"github.com/cesarbmathec/medical-exams-backend/middleware"
 	"github.com/cesarbmathec/medical-exams-backend/migrations"
+	"github.com/cesarbmathec/medical-exams-backend/routes"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -53,6 +52,9 @@ func main() {
 	// Crear instancia de Gin
 	r := gin.Default()
 
+	// Usamos el router definido en routes.go
+	r = routes.SetupRouter()
+
 	// Configurar CORS
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"}, // Frontend
@@ -61,42 +63,6 @@ func main() {
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 	}))
-
-	// --- RUTAS PÚBLICAS ---
-	api := r.Group("/api")
-	{
-		api.POST("/login", controllers.Login)
-		api.POST("/register", controllers.Register)
-	}
-
-	// --- RUTAS PROTEGIDAS (Requieren Token) ---
-	protected := api.Group("/")
-	protected.Use(middleware.AuthMiddleware())
-	{
-		// Ejemplo: Perfil del usuario actual
-		protected.GET("/me", func(c *gin.Context) {
-			userID, _ := c.Get("userID")
-			c.JSON(200, gin.H{"user_id": userID, "message": "Acceso concedido"})
-		})
-
-		// RUTAS DE PACIENTES
-		patients := protected.Group("/patients")
-		{
-			patients.POST("/", controllers.CreatePatient)    // Registrar
-			patients.GET("/", controllers.GetPatients)       // Listar/Buscar
-			patients.GET("/:id", controllers.GetPatientByID) // Ver detalle
-		}
-
-		// Catálogo
-		protected.GET("/exams/catalog", controllers.GetExamCatalog)
-
-		// Órdenes
-		protected.POST("/orders", controllers.CreateOrder)
-		protected.GET("/orders", controllers.GetOrders)
-
-		// Resultados (Ruta para Bioanalistas)
-		protected.POST("/exams/:id/results", controllers.SubmitResults)
-	}
 
 	port := os.Getenv("PORT")
 	if port == "" {
