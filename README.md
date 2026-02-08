@@ -150,7 +150,7 @@ curl http://localhost:8080/api/v1/patients \
 
 ## Ejemplos de algunos payloads
 
-Base path: `/api/v1`
+Base path: `/api/v1`. (Para más documentación revisar: http://localhost:8080/swagger/index.html)
 
 ### Auth
 
@@ -159,7 +159,7 @@ Base path: `/api/v1`
 ```json
 {
   "username": "admin",
-  "password": "Admin123!"
+  "password": "admin"
 }
 ```
 
@@ -169,7 +169,7 @@ Base path: `/api/v1`
 {
   "username": "user1",
   "email": "user1@test.com",
-  "password": "Admin123!",
+  "password": "user1",
   "full_name": "User One",
   "role_id": 2
 }
