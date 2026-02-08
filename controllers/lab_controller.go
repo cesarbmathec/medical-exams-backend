@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/cesarbmathec/medical-exams-backend/config"
@@ -156,7 +156,7 @@ func GetExamCatalog(c *gin.Context) {
 // @Router       /lab/exams/{id}/results [post]
 // @Security BearerAuth
 func SubmitResults(c *gin.Context) {
-	orderExamID := c.Param("id")
+	orderExamIDParam := c.Param("id")
 	var input []dtos.UpdateResultRequest
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -164,29 +164,54 @@ func SubmitResults(c *gin.Context) {
 		return
 	}
 
+	orderExamID, err := parseUint(orderExamIDParam)
+	if err != nil || orderExamID == 0 {
+		utils.Error(c, http.StatusBadRequest, "ID de examen inválido", nil)
+		return
+	}
+
 	userID, _ := c.Get("userID")
 	db := config.GetDB()
 
-	for _, res := range input {
-		result := models.ExamResult{
-			OrderExamID:     parseUint(orderExamID), // Función auxiliar para convertir string a uint
-			ExamParameterID: res.ParameterID,
-			ValueNumeric:    res.ValueNumeric,
-			ValueText:       res.ValueText,
-			EnteredBy:       userID.(uint),
+	err = db.Transaction(func(tx *gorm.DB) error {
+		var orderExam models.OrderExam
+		if err := tx.First(&orderExam, orderExamID).Error; err != nil {
+			return err
 		}
-		db.Save(&result)
-	}
 
-	// Actualizar estado del examen a 'completado'
-	db.Model(&models.OrderExam{}).Where("id = ?", orderExamID).Update("status", "completado")
+		for _, res := range input {
+			result := models.ExamResult{
+				OrderExamID:     orderExamID,
+				ExamParameterID: res.ParameterID,
+				ValueNumeric:    res.ValueNumeric,
+				ValueText:       res.ValueText,
+				EnteredBy:       userID.(uint),
+			}
+			if err := tx.Create(&result).Error; err != nil {
+				return err
+			}
+		}
+
+		if err := tx.Model(&models.OrderExam{}).Where("id = ?", orderExamID).Update("status", "completado").Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		utils.Error(c, http.StatusInternalServerError, "Error al registrar resultados", err.Error())
+		return
+	}
 
 	utils.Success(c, http.StatusOK, "Resultados registrados exitosamente", nil)
 }
 
 // Función auxiliar para convertir string a uint
-func parseUint(s string) uint {
-	var num uint
-	fmt.Sscanf(s, "%d", &num)
-	return num
+func parseUint(s string) (uint, error) {
+	parsed, err := strconv.ParseUint(s, 10, 0)
+	if err != nil {
+		return 0, err
+	}
+	return uint(parsed), nil
 }

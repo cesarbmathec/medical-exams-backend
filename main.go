@@ -19,6 +19,7 @@ package main
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/cesarbmathec/medical-exams-backend/config"
 	"github.com/cesarbmathec/medical-exams-backend/migrations"
@@ -47,13 +48,36 @@ func main() {
 	r := routes.SetupRouter()
 
 	// Configurar CORS
+	allowedOrigins := parseCSVEnv("CORS_ALLOWED_ORIGINS")
+	if len(allowedOrigins) == 0 && os.Getenv("GIN_MODE") != "release" {
+		allowedOrigins = []string{"http://localhost:3000", "http://localhost:5173"}
+	}
+	if len(allowedOrigins) == 0 && os.Getenv("GIN_MODE") == "release" {
+		log.Fatal("CORS_ALLOWED_ORIGINS requerido en GIN_MODE=release")
+	}
+
+	allowCredentials := true
+	if strings.EqualFold(os.Getenv("CORS_ALLOW_CREDENTIALS"), "false") {
+		allowCredentials = false
+	}
+	for _, origin := range allowedOrigins {
+		if origin == "*" {
+			allowCredentials = false
+			break
+		}
+	}
+
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"}, // Frontend
+		AllowOrigins:     allowedOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept"},
 		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
+		AllowCredentials: allowCredentials,
 	}))
+
+	if os.Getenv("GIN_MODE") == "release" {
+		r.SetTrustedProxies(parseCSVEnv("TRUSTED_PROXIES"))
+	}
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -62,4 +86,21 @@ func main() {
 
 	log.Println("🚀 Servidor corriendo en http://localhost:" + port)
 	r.Run(":" + port)
+}
+
+func parseCSVEnv(key string) []string {
+	value := strings.TrimSpace(os.Getenv(key))
+	if value == "" {
+		return nil
+	}
+
+	parts := strings.Split(value, ",")
+	out := make([]string, 0, len(parts))
+	for _, part := range parts {
+		item := strings.TrimSpace(part)
+		if item != "" {
+			out = append(out, item)
+		}
+	}
+	return out
 }

@@ -1,13 +1,12 @@
 package utils
 
 import (
+	"errors"
 	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
-
-var jwtSecret = os.Getenv("JWT_SECRET")
 
 type Claims struct {
 	UserID   uint   `json:"user_id"`
@@ -17,6 +16,11 @@ type Claims struct {
 }
 
 func GenerateToken(userID uint, username string, roleID uint) (string, error) {
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		return "", errors.New("JWT_SECRET no configurado")
+	}
+
 	claims := &Claims{
 		UserID:   userID,
 		Username: username,
@@ -32,13 +36,21 @@ func GenerateToken(userID uint, username string, roleID uint) (string, error) {
 }
 
 func ValidateToken(tokenString string) (*Claims, error) {
-	Claims := &Claims{}
-	token, err := jwt.ParseWithClaims(tokenString, Claims, func(token *jwt.Token) (interface{}, error) {
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		return nil, errors.New("JWT_SECRET no configurado")
+	}
+
+	claims := &Claims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("método de firma inválido")
+		}
 		return []byte(jwtSecret), nil
 	})
 
 	if err != nil || !token.Valid {
 		return nil, err
 	}
-	return Claims, nil
+	return claims, nil
 }

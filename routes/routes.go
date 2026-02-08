@@ -14,8 +14,9 @@ import (
 
 func SetupRouter() *gin.Engine {
 	r := gin.New()
-	r.Use(gin.Logger())
+	r.Use(middleware.RequestLogger())
 	r.Use(middleware.RecoveryMiddleware())
+	r.Use(middleware.SecurityHeaders())
 
 	// Swagger
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -23,8 +24,9 @@ func SetupRouter() *gin.Engine {
 	// --- RUTAS PÚBLICAS ---
 	api := r.Group("/api/v1")
 	{
-		api.POST("/login", controllers.Login)
-		api.POST("/register", controllers.Register)
+		loginLimiter := middleware.NewRateLimiter()
+		api.POST("/login", loginLimiter.Middleware(), controllers.Login)
+		api.POST("/register", loginLimiter.Middleware(), controllers.Register)
 	}
 
 	// --- RUTAS PROTEGIDAS (Requieren Token) ---

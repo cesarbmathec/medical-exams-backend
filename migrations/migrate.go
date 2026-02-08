@@ -2,6 +2,8 @@ package migrations
 
 import (
 	"log"
+	"os"
+	"strings"
 
 	"github.com/cesarbmathec/medical-exams-backend/models"
 
@@ -50,6 +52,11 @@ func RunMigrations(db *gorm.DB) {
 
 // seedData crea los datos iniciales del sistema
 func seedData(db *gorm.DB) {
+	if !shouldSeed() {
+		log.Println("🌱 Seeding skipped (disabled for current environment)")
+		return
+	}
+
 	log.Println("🌱 Seeding initial data...")
 
 	// Crear roles si no existen
@@ -59,6 +66,23 @@ func seedData(db *gorm.DB) {
 	createSampleTypes(db)
 
 	log.Println("✅ Seeding completed!")
+}
+
+func shouldSeed() bool {
+	if strings.EqualFold(os.Getenv("SEED_DB"), "false") {
+		return false
+	}
+
+	if strings.EqualFold(os.Getenv("SEED_DB"), "true") {
+		return true
+	}
+
+	ginMode := strings.ToLower(os.Getenv("GIN_MODE"))
+	if ginMode == "release" || ginMode == "production" {
+		return false
+	}
+
+	return true
 }
 
 func createRoles(db *gorm.DB) {
