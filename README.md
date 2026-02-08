@@ -148,7 +148,7 @@ curl http://localhost:8080/api/v1/patients \
   -H "Authorization: Bearer <token>"
 ```
 
-## Ejemplos de payloads
+## Ejemplos de algunos payloads
 
 Base path: `/api/v1`
 
