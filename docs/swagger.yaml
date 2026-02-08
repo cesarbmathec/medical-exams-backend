@@ -1,4 +1,4 @@
-basePath: /api
+basePath: /api/v1
 definitions:
   dtos.CreateOrderRequest:
     properties:
@@ -78,6 +78,13 @@ definitions:
     - password
     - username
     type: object
+  dtos.LoginResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/models.UserResponse'
+    type: object
   dtos.OrderExamRequest:
     properties:
       exam_type_id:
@@ -108,6 +115,13 @@ definitions:
     - password
     - role_id
     - username
+    type: object
+  dtos.RegisterResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/models.UserResponse'
     type: object
   dtos.UpdateResultRequest:
     properties:
@@ -675,6 +689,45 @@ definitions:
     - role_id
     - username
     type: object
+  models.UserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      last_login:
+        type: string
+      phone:
+        type: string
+      role_id:
+        type: integer
+      role_name:
+        type: string
+      username:
+        type: string
+    type: object
+  utils.Response:
+    properties:
+      code:
+        description: Código HTTP (200, 400, 500, etc.)
+        type: integer
+      data:
+        description: Datos (solo en respuestas exitosas)
+      errors:
+        description: Detalles técnicos (opcional)
+      message:
+        description: Mensaje legible para el usuario/dev
+        type: string
+      status:
+        description: '"success" o "error"'
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -685,184 +738,13 @@ info:
   title: Laboratorio Clínico API
   version: "1.0"
 paths:
-  /exams/catalog:
+  /lab/exams/{id}:
     get:
       consumes:
       - application/json
-      description: Obtiene la lista de tipos de exámenes disponibles con sus categorías
-        y parámetros
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/models.ExamType'
-            type: array
-        "500":
-          description: Internal Server Error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Catálogo de exámenes
-      tags:
-      - exams
-  /login:
-    post:
-      consumes:
-      - application/json
-      description: Autentica al usuario y devuelve un token JWT
+      description: Retorna el examen con sus parámetros y resultados previos (si existen)
       parameters:
-      - description: Credenciales de usuario
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dtos.LoginRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Iniciar sesión
-      tags:
-      - auth
-  /orders:
-    get:
-      consumes:
-      - application/json
-      description: Obtiene una lista de todas las órdenes de examen con sus detalles
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/models.Order'
-            type: array
-        "500":
-          description: Internal Server Error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Listar órdenes de examen
-      tags:
-      - orders
-    post:
-      consumes:
-      - application/json
-      description: Crea una nueva orden de examen para un paciente específico
-      parameters:
-      - description: Datos para crear la orden
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dtos.CreateOrderRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/models.Order'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Crear orden de examen
-      tags:
-      - orders
-  /patients:
-    get:
-      consumes:
-      - application/json
-      description: Obtiene una lista de pacientes, con opción de filtrar por número
-        de documento
-      parameters:
-      - description: Número de documento para filtrar
-        in: query
-        name: document
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/models.Patient'
-            type: array
-        "500":
-          description: Internal Server Error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Listar pacientes
-      tags:
-      - patients
-    post:
-      consumes:
-      - application/json
-      description: Crea un nuevo paciente en el sistema
-      parameters:
-      - description: Datos para crear el paciente
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dtos.CreatePatientRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/models.Patient'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Crear paciente
-      tags:
-      - patients
-  /patients/{id}:
-    get:
-      consumes:
-      - application/json
-      description: Obtiene los detalles de un paciente específico por su ID
-      parameters:
-      - description: ID del paciente
+      - description: ID del examen dentro de la orden
         in: path
         name: id
         required: true
@@ -873,58 +755,27 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Patient'
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.OrderExam'
+              type: object
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Obtener paciente por ID
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                errors:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Detalle de un examen específico de una orden
       tags:
-      - patients
-  /register:
-    post:
-      consumes:
-      - application/json
-      description: Crea un nuevo usuario en el sistema
-      parameters:
-      - description: Datos del nuevo usuario
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dtos.RegisterRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Registrar nuevo usuario
-      tags:
-      - auth
-  /results/{id}:
+      - lab
+  /lab/exams/{id}/results:
     post:
       consumes:
       - application/json
@@ -950,24 +801,482 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  type: object
+              type: object
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                errors:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Registrar resultados de examen
+      tags:
+      - lab
+  /lab/exams/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Order Exam ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 'Nuevo estado: muestra_tomada, en_analisis'
+        in: body
+        name: status
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                errors:
+                  type: string
+              type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                errors:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Actualizar estado de un examen (Toma de muestra / Análisis)
+      tags:
+      - lab
+  /lab/exams/{id}/validate:
+    post:
+      consumes:
+      - application/json
+      description: Marca los resultados como validados y finaliza el examen para su
+        impresión
+      parameters:
+      - description: ID del examen de la orden
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                errors:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Validar resultados de un examen
+      tags:
+      - lab
+  /lab/exams/catalog:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene la lista de tipos de exámenes disponibles con sus categorías
+        y parámetros
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              allOf:
+              - $ref: '#/definitions/utils.Response'
+              - properties:
+                  data:
+                    items:
+                      $ref: '#/definitions/models.ExamType'
+                    type: array
+                type: object
+            type: array
+        "500":
+          description: Error interno del servidor
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                errors:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Catálogo de exámenes
+      tags:
+      - lab
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Autentica al usuario y devuelve un token JWT
+      parameters:
+      - description: Credenciales de usuario
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.LoginResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                errors:
+                  type: string
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                errors:
+                  type: string
+              type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                errors:
+                  type: string
+              type: object
+      summary: Iniciar sesión
+      tags:
+      - auth
+  /orders:
+    get:
+      description: Obtiene órdenes filtradas por rango de fechas, estado, prioridad
+        o paciente
+      parameters:
+      - description: Estado (pendiente, completado, cancelado)
+        in: query
+        name: status
+        type: string
+      - description: Prioridad (normal, urgente, stat)
+        in: query
+        name: priority
+        type: string
+      - description: Fecha inicio (YYYY-MM-DD)
+        in: query
+        name: start_date
+        type: string
+      - description: Fecha fin (YYYY-MM-DD)
+        in: query
+        name: end_date
+        type: string
+      - description: ID del Paciente
+        in: query
+        name: patient_id
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              allOf:
+              - $ref: '#/definitions/utils.Response'
+              - properties:
+                  data:
+                    items:
+                      $ref: '#/definitions/models.Order'
+                    type: array
+                type: object
+            type: array
+        "500":
+          description: Error interno del servidor
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                errors:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Listar órdenes con filtros
+      tags:
+      - orders
+    post:
+      consumes:
+      - application/json
+      description: Crea una nueva orden de examen para un paciente específico
+      parameters:
+      - description: Datos para crear la orden
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.CreateOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Order'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                errors:
+                  type: string
+              type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                errors:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Crear orden de examen
+      tags:
+      - orders
+  /patients:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene una lista de pacientes, con opción de filtrar por número
+        de documento
+      parameters:
+      - description: Número de documento para filtrar
+        in: query
+        name: document
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              allOf:
+              - $ref: '#/definitions/utils.Response'
+              - properties:
+                  data:
+                    items:
+                      $ref: '#/definitions/models.Patient'
+                    type: array
+                type: object
+            type: array
+        "500":
+          description: Error interno del servidor
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                errors:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Listar pacientes
+      tags:
+      - patients
+    post:
+      consumes:
+      - application/json
+      description: Crea un nuevo paciente en el sistema
+      parameters:
+      - description: Datos para crear el paciente
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.CreatePatientRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Patient'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                errors:
+                  type: string
+              type: object
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Registrar resultados de examen
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                errors:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Crear paciente
       tags:
-      - results
+      - patients
+  /patients/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene los detalles de un paciente específico por su ID
+      parameters:
+      - description: ID del paciente
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Patient'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                errors:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Obtener paciente por ID
+      tags:
+      - patients
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Crea un nuevo usuario en el sistema
+      parameters:
+      - description: Datos del nuevo usuario
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.LoginResponse'
+              type: object
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.RegisterResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                errors:
+                  type: string
+              type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                errors:
+                  type: string
+              type: object
+      summary: Registrar nuevo usuario
+      tags:
+      - auth
 securityDefinitions:
   BearerAuth:
     description: Escribe 'Bearer ' seguido de tu token JWT

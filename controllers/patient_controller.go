@@ -6,6 +6,7 @@ import (
 	"github.com/cesarbmathec/medical-exams-backend/config"
 	"github.com/cesarbmathec/medical-exams-backend/dtos"
 	"github.com/cesarbmathec/medical-exams-backend/models"
+	"github.com/cesarbmathec/medical-exams-backend/utils"
 	"github.com/gin-gonic/gin"
 
 	_ "github.com/cesarbmathec/medical-exams-backend/docs"
@@ -18,14 +19,16 @@ import (
 // @Accept       json
 // @Produce      json
 // @Param        request body dtos.CreatePatientRequest true "Datos para crear el paciente"
-// @Success      201 {object} models.Patient
-// @Failure      400 {object} map[string]string
-// @Failure      500 {object} map[string]string
+// @Success      201 {object} utils.Response{data=models.Patient}
+// @Failure      400 {object} utils.Response{errors=string}
+// @Failure      500 {object} utils.Response{errors=string}
 // @Router       /patients [post]
+// @Security BearerAuth
 func CreatePatient(c *gin.Context) {
 	var input dtos.CreatePatientRequest
+
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		utils.Error(c, http.StatusBadRequest, "Error de validación", err.Error())
 		return
 	}
 
@@ -48,11 +51,11 @@ func CreatePatient(c *gin.Context) {
 
 	db := config.GetDB()
 	if err := db.Create(&patient).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al guardar: " + err.Error()})
+		utils.Error(c, http.StatusInternalServerError, "No se pudo crear el paciente", err.Error())
 		return
 	}
 
-	c.JSON(http.StatusCreated, patient)
+	utils.Success(c, http.StatusCreated, "Paciente creado exitosamente", patient)
 }
 
 // GetPatients godoc
@@ -62,9 +65,10 @@ func CreatePatient(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        document query string false "Número de documento para filtrar"
-// @Success      200 {array} models.Patient
-// @Failure      500 {object} map[string]string
+// @Success      200 {array} utils.Response{data=[]models.Patient}
+// @Failure      500 {object} utils.Response{errors=string} "Error interno del servidor"
 // @Router       /patients [get]
+// @Security BearerAuth
 func GetPatients(c *gin.Context) {
 	var patients []models.Patient
 	db := config.GetDB()
@@ -77,11 +81,11 @@ func GetPatients(c *gin.Context) {
 	}
 
 	if err := query.Find(&patients).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "No se pudieron obtener los pacientes"})
+		utils.Error(c, http.StatusInternalServerError, "Error al obtener pacientes", err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, patients)
+	utils.Success(c, http.StatusOK, "Pacientes obtenidos exitosamente", patients)
 }
 
 // GetPatientByID godoc
@@ -91,19 +95,19 @@ func GetPatients(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        id path int true "ID del paciente"
-// @Success      200 {object} models.Patient
-// @Failure      404 {object} map[string]string
-// @Failure      500 {object} map[string]string
+// @Success      200 {object} utils.Response{data=models.Patient}
+// @Failure      404 {object} utils.Response{errors=string}
 // @Router       /patients/{id} [get]
+// @Security BearerAuth
 func GetPatientByID(c *gin.Context) {
 	id := c.Param("id")
 	var patient models.Patient
 	db := config.GetDB()
 
 	if err := db.First(&patient, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Paciente no encontrado"})
+		utils.Error(c, http.StatusNotFound, "Paciente no encontrado", nil)
 		return
 	}
 
-	c.JSON(http.StatusOK, patient)
+	utils.Success(c, http.StatusOK, "Paciente obtenido exitosamente", patient)
 }

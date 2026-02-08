@@ -6,6 +6,7 @@ import (
 	"github.com/cesarbmathec/medical-exams-backend/config"
 	"github.com/cesarbmathec/medical-exams-backend/dtos"
 	"github.com/cesarbmathec/medical-exams-backend/models"
+	"github.com/cesarbmathec/medical-exams-backend/utils"
 	"github.com/gin-gonic/gin"
 
 	_ "github.com/cesarbmathec/medical-exams-backend/docs"
@@ -18,14 +19,15 @@ import (
 // @Accept       json
 // @Produce      json
 // @Param        request body dtos.CreateOrderRequest true "Datos para crear la orden"
-// @Success      201 {object} models.Order
-// @Failure      400 {object} map[string]string
-// @Failure      500 {object} map[string]string
+// @Success      201 {object} utils.Response{data=models.Order}
+// @Failure      400 {object} utils.Response{errors=string}
+// @Failure      500 {object} utils.Response{errors=string} "Error interno del servidor"
 // @Router       /orders [post]
+// @Security BearerAuth
 func CreateOrder(c *gin.Context) {
 	var input dtos.CreateOrderRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		utils.Error(c, http.StatusBadRequest, "Error de validación", err.Error())
 		return
 	}
 
@@ -46,7 +48,7 @@ func CreateOrder(c *gin.Context) {
 
 	if err := tx.Create(&order).Error; err != nil {
 		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "No se pudo crear la orden"})
+		utils.Error(c, http.StatusInternalServerError, "No se pudo crear la orden", err.Error())
 		return
 	}
 
@@ -60,32 +62,57 @@ func CreateOrder(c *gin.Context) {
 		}
 		if err := tx.Create(&exam).Error; err != nil {
 			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al asignar exámenes"})
+			utils.Error(c, http.StatusInternalServerError, "No se pudo crear el examen", err.Error())
 			return
 		}
 	}
 
 	tx.Commit()
-	c.JSON(http.StatusCreated, order)
+	utils.Success(c, http.StatusCreated, "Orden creada exitosamente", order)
 }
 
 // GetOrders godoc
-// @Summary      Listar órdenes de examen
-// @Description  Obtiene una lista de todas las órdenes de examen con sus detalles
+// @Summary      Listar órdenes con filtros
+// @Description  Obtiene órdenes filtradas por rango de fechas, estado, prioridad o paciente
 // @Tags         orders
-// @Accept       json
-// @Produce      json
-// @Success      200 {array} models.Order
-// @Failure      500 {object} map[string]string
+// @Security     BearerAuth
+// @Param        status query string false "Estado (pendiente, completado, cancelado)"
+// @Param        priority query string false "Prioridad (normal, urgente, stat)"
+// @Param        start_date query string false "Fecha inicio (YYYY-MM-DD)"
+// @Param        end_date query string false "Fecha fin (YYYY-MM-DD)"
+// @Param        patient_id query int false "ID del Paciente"
+// @Success      200 {array} utils.Response{data=[]models.Order}
+// @Failure      500 {object} utils.Response{errors=string} "Error interno del servidor"
 // @Router       /orders [get]
 func GetOrders(c *gin.Context) {
-	var orders []models.Order
 	db := config.GetDB()
+	var orders []models.Order
 
-	// Preload carga los exámenes asociados a cada orden
-	if err := db.Preload("Exams").Find(&orders).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al obtener órdenes"})
+	// Iniciamos el query cargando la relación con el paciente para el Front
+	query := db.Preload("Patient").Preload("OrderExams.ExamType")
+
+	// Aplicar filtros dinámicos
+	if status := c.Query("status"); status != "" {
+		query = query.Where("status = ?", status)
+	}
+	if priority := c.Query("priority"); priority != "" {
+		query = query.Where("priority = ?", priority)
+	}
+	if pID := c.Query("patient_id"); pID != "" {
+		query = query.Where("patient_id = ?", pID)
+	}
+
+	// Filtro por rango de fechas
+	startDate := c.Query("start_date")
+	endDate := c.Query("end_date")
+	if startDate != "" && endDate != "" {
+		query = query.Where("order_date BETWEEN ? AND ?", startDate+" 00:00:00", endDate+" 23:59:59")
+	}
+
+	if err := query.Order("created_at DESC").Find(&orders).Error; err != nil {
+		utils.Error(c, http.StatusInternalServerError, "Error al obtener órdenes", err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, orders)
+
+	utils.Success(c, http.StatusOK, "Órdenes obtenidas exitosamente", orders)
 }

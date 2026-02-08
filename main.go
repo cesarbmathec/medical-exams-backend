@@ -7,7 +7,7 @@
 // @contact.email  soporte@laboratorio.com
 
 // @host      localhost:8080
-// @BasePath  /api
+// @BasePath  /api/v1
 
 // @securityDefinitions.apikey BearerAuth
 // @in header
@@ -24,13 +24,7 @@ import (
 	"github.com/cesarbmathec/medical-exams-backend/migrations"
 	"github.com/cesarbmathec/medical-exams-backend/routes"
 	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-
-	// Swagger
-
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 
 	_ "github.com/cesarbmathec/medical-exams-backend/docs"
 )
@@ -49,17 +43,14 @@ func main() {
 	// Ejecutamos Migraciones y Seeding
 	migrations.RunMigrations(db)
 
-	// Crear instancia de Gin
-	r := gin.Default()
-
 	// Usamos el router definido en routes.go
-	r = routes.SetupRouter()
+	r := routes.SetupRouter()
 
 	// Configurar CORS
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"}, // Frontend
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 	}))
@@ -68,8 +59,6 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	log.Println("🚀 Servidor corriendo en http://localhost:" + port)
 	r.Run(":" + port)
