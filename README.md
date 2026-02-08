@@ -150,7 +150,11 @@ curl http://localhost:8080/api/v1/patients \
 
 ## Ejemplos de algunos payloads
 
-Base path: `/api/v1`. (Para más documentación revisar: http://localhost:8080/swagger/index.html)
+Base path: `/api/v1`. Más documentación disponible en:
+
+```
+http://localhost:8080/swagger/index.html)
+```
 
 ### Auth
 
