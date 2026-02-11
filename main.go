@@ -17,6 +17,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -49,8 +50,9 @@ func main() {
 
 	// Configurar CORS
 	allowedOrigins := parseCSVEnv("CORS_ALLOWED_ORIGINS")
+
 	if len(allowedOrigins) == 0 && os.Getenv("GIN_MODE") != "release" {
-		allowedOrigins = []string{"http://localhost:3000", "http://localhost:5173"}
+		allowedOrigins = []string{"http://localhost:3000", "http://localhost:5173", "http://localhost:34115"}
 	}
 	if len(allowedOrigins) == 0 && os.Getenv("GIN_MODE") == "release" {
 		log.Fatal("CORS_ALLOWED_ORIGINS requerido en GIN_MODE=release")
@@ -67,10 +69,20 @@ func main() {
 		}
 	}
 
+	fmt.Printf("log.Logger AllowCredentials: %v\n", allowCredentials)
+	fmt.Printf("log.Logger AllowedOrigins: %v\n", allowedOrigins)
+
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     allowedOrigins,
+		AllowOriginFunc: func(origin string) bool {
+			// Esto permite localhost y el esquema especial de Wails, y también los orígenes del .env
+			if contains(allowedOrigins, origin) {
+				return true
+			}
+			return origin == "wails://wails.localhost:34115" ||
+				origin == "wails://wails.127.0.0.1:34115" || origin == "http://localhost:34115" || origin == "http://127.0.0.1:5173"
+		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept", "X-Requested-With"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: allowCredentials,
 	}))
@@ -103,4 +115,14 @@ func parseCSVEnv(key string) []string {
 		}
 	}
 	return out
+}
+
+// contains checks if a string is present in a slice of strings.
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }
